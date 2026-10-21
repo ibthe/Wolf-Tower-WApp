@@ -5,6 +5,9 @@ package com.wolftower.app
  * Флаги сверены с `ciadpi --help` (коммит ba53229). "+s" = смещение от начала SNI.
  */
 object StrategyArgs {
+    // Должна быть объявлена выше library: поля object инициализируются по порядку.
+    private val CHAIN = listOf("-d1", "-s1+s", "-s3+s", "-s6+s", "-s9+s", "-s12+s", "-s15+s", "-s20+s", "-s30+s")
+
     private val library: Map<String, List<String>> = mapOf(
         "split" to listOf("-s1+s"),
         "disorder" to listOf("-d1+s"),
@@ -30,8 +33,6 @@ object StrategyArgs {
         "split+udp" to listOf("-s1+s", "-a1"),
         "disorder+udp" to listOf("-d1+s", "-a1"),
     )
-
-    private val CHAIN = listOf("-d1", "-s1+s", "-s3+s", "-s6+s", "-s9+s", "-s12+s", "-s15+s", "-s20+s", "-s30+s")
 
     /** Своя строка в стиле ByeByeDPI: имя стратегии вида "raw:-d1 -s1+s -a1". */
     const val RAW_PREFIX = "raw:"
