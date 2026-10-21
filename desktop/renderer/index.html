@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wolf Tower</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Wolf Tower</h1>
+    <div id="status" class="muted"></div>
+    <button id="toggle" class="primary full">Запустить</button>
+    <div id="hint" class="muted"></div>
+
+    <section class="card">
+      <h2>Лицензия</h2>
+      <div id="licenseText"></div>
+      <button id="newKeyBtn" class="link" hidden>Ввести новый ключ</button>
+      <div id="keyBox" hidden>
+        <div class="muted small">ID устройства (нужен для ключа с привязкой):</div>
+        <div id="deviceId" class="mono big"></div>
+        <div class="row"><button id="copyId">Копировать ID</button></div>
+        <input id="keyInput" type="text" placeholder="Лицензионный ключ" spellcheck="false" autocomplete="off">
+        <div class="row">
+          <button id="activate">Активировать</button>
+          <button id="paste" class="secondary">Вставить</button>
+        </div>
+        <div id="licenseMsg" class="muted small"></div>
+      </div>
+    </section>
+
+    <div id="services"></div>
+
+    <section class="card">
+      <button id="probeBtn" class="secondary full">Подобрать стратегии автоматически</button>
+      <div id="probeProgress" class="muted small"></div>
+      <button id="probeCancel" class="link" hidden>Отмена</button>
+      <pre id="probeReport" class="small"></pre>
+    </section>
+
+    <section class="card" id="tgCard" hidden>
+      <h2>Telegram</h2>
+      <div class="small">
+        Приложение Telegram не использует системный прокси. Добавьте в нём прокси вручную:
+        <b>SOCKS5, адрес 127.0.0.1, порт <span id="tgPort"></span></b> (без логина и пароля), либо нажмите кнопку.
+        Защита должна быть включена.
+      </div>
+      <div class="row">
+        <button id="tgAdd">Добавить в Telegram</button>
+        <button id="tgCopy" class="secondary">Копировать адрес</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row between">
+        <h2 id="logTitle">Лог</h2>
+        <button id="logToggle" class="link">Развернуть</button>
+      </div>
+      <div id="logLast" class="muted small ellipsis"></div>
+      <div id="logBox" hidden>
+        <pre id="logText" class="log mono small"></pre>
+        <div class="row">
+          <button id="logCopy" class="secondary">Копировать</button>
+          <button id="logClear" class="secondary">Очистить</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card small">
+      <b>Что покрывает версия для компьютера.</b> Через защиту идут сайты выбранных сервисов в браузерах и других
+      программах, которые используют системные настройки прокси. Приложения вроде Telegram настраиваются отдельно
+      (см. выше). <span id="platformNote"></span>
+    </section>
+
+    <div class="row">
+      <button id="diag" class="secondary">Скопировать диагностику</button>
+      <button id="licensesToggle" class="link">Лицензии компонентов</button>
+    </div>
+    <div id="diagMsg" class="muted small"></div>
+    <pre id="licensesText" class="small" hidden></pre>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+{
+  "version": 3,
+  "strategies": [
+    "disorder",
+    "oob",
+    "disoob",
+    "split",
+    "disorder+tlsrec",
+    "oob+tlsrec",
+    "split+tlsrec",
+    "fake+disorder",
+    "fake+oob",
+    "fake+split",
+    "fake+tlsrec",
+    "fake4+disorder",
+    "fake12+disorder",
+    "disorder0",
+    "split0",
+    "chain",
+    "chain+udp",
+    "disorder0+udp",
+    "split+udp",
+    "disorder+udp"
+  ],
+  "profiles": [
+    {
+      "id": "youtube",
+      "name": "YouTube и Google",
+      "android_packages": [
+        "com.google.android.youtube",
+        "com.google.android.apps.youtube.music",
+        "com.google.android.gms"
+      ],
+      "domains": [
+        "youtube.com",
+        "youtu.be",
+        "googlevideo.com",
+        "ytimg.com",
+        "ggpht.com",
+        "google.com",
+        "googleapis.com",
+        "gstatic.com",
+        "googleusercontent.com",
+        "gvt1.com"
+      ],
+      "probe_hosts": [
+        "www.youtube.com",
+        "i.ytimg.com",
+        "redirector.googlevideo.com"
+      ],
+      "block_quic": true
+    },
+    {
+      "id": "whatsapp",
+      "name": "WhatsApp",
+      "android_packages": [
+        "com.whatsapp",
+        "com.whatsapp.w4b"
+      ],
+      "domains": [
+        "whatsapp.com",
+        "whatsapp.net",
+        "wa.me"
+      ],
+      "probe_hosts": [
+        "web.whatsapp.com",
+        "www.whatsapp.com",
+        "static.whatsapp.net"
+      ],
+      "block_quic": false,
+      "match_all": true
+    },
+    {
+      "id": "instagram",
+      "name": "Instagram",
+      "android_packages": [
+        "com.instagram.android",
+        "com.instagram.lite"
+      ],
+      "domains": [
+        "instagram.com",
+        "cdninstagram.com",
+        "fbcdn.net",
+        "facebook.com",
+        "fbsbx.com"
+      ],
+      "probe_hosts": [
+        "www.instagram.com",
+        "i.instagram.com",
+        "static.cdninstagram.com"
+      ],
+      "block_quic": true
+    },
+    {
+      "id": "telegram",
+      "name": "Telegram",
+      "android_packages": [
+        "org.telegram.messenger",
+        "org.telegram.messenger.web",
+        "org.thunderdog.challegram"
+      ],
+      "domains": [
+        "telegram.org",
+        "t.me",
+        "telegra.ph",
+        "telegram.me"
+      ],
+      "ip_ranges": [
+        "91.108.4.0/22",
+        "91.108.8.0/22",
+        "91.108.12.0/22",
+        "91.108.16.0/22",
+        "91.108.20.0/22",
+        "91.108.56.0/22",
+        "91.105.192.0/23",
+        "149.154.160.0/20",
+        "185.76.151.0/24"
+      ],
+      "probe_hosts": [
+        "web.telegram.org",
+        "telegram.org",
+        "core.telegram.org"
+      ],
+      "block_quic": false
+    }
+  ]
+}
