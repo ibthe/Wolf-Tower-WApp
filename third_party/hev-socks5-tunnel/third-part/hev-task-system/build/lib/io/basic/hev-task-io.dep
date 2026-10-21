@@ -1,0 +1,3 @@
+build/lib/io/basic/hev-task-io.o: src/lib/io/basic/hev-task-io.c \
+ src/kern/task/hev-task.h src/lib/io/buffer/hev-circular-buffer.h \
+ src/lib/misc/hev-compiler.h src/lib/io/basic/hev-task-io.h

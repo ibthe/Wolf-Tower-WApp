@@ -1,0 +1,4 @@
+build/lib/io/socket/hev-task-io-socket.o: \
+ src/lib/io/socket/hev-task-io-socket.c src/kern/task/hev-task.h \
+ src/lib/io/basic/hev-task-io.h src/lib/misc/hev-compiler.h \
+ src/lib/io/socket/hev-task-io-socket.h

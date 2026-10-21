@@ -1,0 +1,10 @@
+build/kern/task/hev-task-executer.o: src/kern/task/hev-task-executer.c \
+ src/kern/task/hev-task-executer.h src/kern/task/hev-task-private.h \
+ src/kern/task/hev-task.h src/kern/task/hev-task-stack.h \
+ src/lib/list/hev-list.h src/lib/rbtree/hev-rbtree.h \
+ src/kern/core/hev-task-system-private.h src/kern/core/hev-task-system.h \
+ src/kern/task/hev-task.h src/kern/task/hev-task-private.h \
+ src/kern/time/hev-task-timer.h src/lib/rbtree/hev-rbtree-cached.h \
+ src/lib/rbtree/hev-rbtree.h src/kern/io/hev-task-io-reactor.h \
+ src/kern/io/hev-task-io-reactor-epoll.h src/lib/dns/hev-task-dns-proxy.h \
+ src/lib/misc/hev-task-stack-detector.h

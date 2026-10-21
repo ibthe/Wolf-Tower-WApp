@@ -1,0 +1,6 @@
+build/kern/aide/hev-task-aide.o: src/kern/aide/hev-task-aide.c \
+ src/kern/task/hev-task-private.h src/kern/task/hev-task.h \
+ src/kern/task/hev-task-stack.h src/lib/list/hev-list.h \
+ src/lib/rbtree/hev-rbtree.h src/kern/io/hev-task-io-reactor.h \
+ src/kern/io/hev-task-io-reactor-epoll.h src/lib/io/basic/hev-task-io.h \
+ src/kern/aide/hev-task-aide.h

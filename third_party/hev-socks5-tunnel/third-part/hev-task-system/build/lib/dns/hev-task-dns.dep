@@ -1,0 +1,10 @@
+build/lib/dns/hev-task-dns.o: src/lib/dns/hev-task-dns.c \
+ src/lib/misc/hev-compiler.h src/lib/dns/hev-task-dns-proxy.h \
+ src/kern/core/hev-task-system-private.h src/kern/core/hev-task-system.h \
+ src/kern/task/hev-task.h src/kern/task/hev-task-private.h \
+ src/kern/task/hev-task.h src/kern/task/hev-task-stack.h \
+ src/lib/list/hev-list.h src/lib/rbtree/hev-rbtree.h \
+ src/kern/time/hev-task-timer.h src/lib/rbtree/hev-rbtree-cached.h \
+ src/lib/rbtree/hev-rbtree.h src/kern/io/hev-task-io-reactor.h \
+ src/kern/io/hev-task-io-reactor-epoll.h \
+ src/lib/misc/hev-task-stack-detector.h src/lib/dns/hev-task-dns.h

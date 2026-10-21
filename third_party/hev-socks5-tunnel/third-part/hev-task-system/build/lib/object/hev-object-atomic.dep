@@ -1,0 +1,3 @@
+build/lib/object/hev-object-atomic.o: src/lib/object/hev-object-atomic.c \
+ src/lib/misc/hev-compiler.h src/lib/object/hev-object-atomic.h \
+ include/hev-object.h
