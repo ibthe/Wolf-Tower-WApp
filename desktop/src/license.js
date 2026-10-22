@@ -159,9 +159,9 @@ class License {
     if (stored) {
       const r = this.verifyKey(stored);
       if (r.ok) {
-        if (r.untilMs === null) return { kind: 'licensed', until: null, plan: r.plan };
+        if (r.untilMs === null) return { kind: 'licensed', until: null, plan: r.plan, untilMs: null };
         if (!tampered) {
-          if (now < r.untilMs) return { kind: 'licensed', until: r.untilText, plan: r.plan };
+          if (now < r.untilMs) return { kind: 'licensed', until: r.untilText, plan: r.plan, untilMs: r.untilMs };
           expired = true;
         }
       }

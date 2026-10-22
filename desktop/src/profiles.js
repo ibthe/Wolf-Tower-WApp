@@ -84,7 +84,7 @@ function parseConfig(json) {
     matchAll: !!o.match_all,
   }));
   const strategies = json.strategies || [];
-  const defaultStrategy = strategies.includes('disorder') ? 'disorder' : strategies[0];
+  const defaultStrategy = strategies[0];
   return { profiles, strategies, defaultStrategy };
 }
 

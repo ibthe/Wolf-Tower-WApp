@@ -141,8 +141,9 @@ class Engine extends EventEmitter {
     this.emit('log', msg);
   }
 
+  /** Продукт защищает только WhatsApp: все профили из конфигурации (он там один) всегда включены. */
   enabledIds() {
-    return this.store.get('enabled', []);
+    return this.config.profiles.map((p) => p.id);
   }
 
   strategyFor(id) {

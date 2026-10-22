@@ -140,6 +140,9 @@ object AutoProbe {
             var best: String? = null
             var bestOk = 0
             for (s in candidates) {
+                // Проба смотрит только TLS-адреса. Для match_all-сервиса (WhatsApp) "без обхода" не выбираем:
+                // сайт может открываться, а чат (Noise, без SNI) нет.
+                if (s == "none" && profile.matchAll) continue
                 val c = counts[s] ?: 0
                 if (c > bestOk) {
                     best = s

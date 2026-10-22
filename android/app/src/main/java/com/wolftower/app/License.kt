@@ -13,7 +13,7 @@ import java.time.ZoneOffset
 
 sealed class LicenseStatus {
     /** until == null: бессрочная. plan == "trial": пробная лицензия. */
-    data class Licensed(val until: String?, val plan: String) : LicenseStatus()
+    data class Licensed(val until: String?, val plan: String, val untilMs: Long? = null) : LicenseStatus()
     object NotActivated : LicenseStatus()
     object LicenseExpired : LicenseStatus()
     object ClockTampered : LicenseStatus()
@@ -159,7 +159,7 @@ object LicenseManager {
                 val until = r.untilMs
                 if (until == null) return LicenseStatus.Licensed(null, r.plan)
                 if (!tampered) {
-                    if (now < until) return LicenseStatus.Licensed(r.untilText, r.plan)
+                    if (now < until) return LicenseStatus.Licensed(r.untilText, r.plan, until)
                     licenseExpired = true
                 }
             }
@@ -169,6 +169,28 @@ object LicenseManager {
     }
 
     fun canRun(ctx: Context): Boolean = status(ctx).canRun
+
+    private fun ruPlural(n: Long, one: String, few: String, many: String): String {
+        val m100 = n % 100
+        val m10 = n % 10
+        return when {
+            m100 in 11..14 -> many
+            m10 == 1L -> one
+            m10 in 2..4 -> few
+            else -> many
+        }
+    }
+
+    /** "142 дня", "5 часов" и т.п. до конца срока; null, если лицензия бессрочная или срок вышел. */
+    fun remainingText(s: LicenseStatus.Licensed): String? {
+        val until = s.untilMs ?: return null
+        val left = until - System.currentTimeMillis()
+        if (left <= 0) return null
+        val days = left / DAY_MS
+        if (days >= 1) return "$days " + ruPlural(days, "день", "дня", "дней")
+        val hours = maxOf(1L, left / (60L * 60 * 1000))
+        return "$hours " + ruPlural(hours, "час", "часа", "часов")
+    }
 
     fun describe(s: LicenseStatus): String = when (s) {
         is LicenseStatus.Licensed -> {

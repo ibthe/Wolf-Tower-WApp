@@ -269,7 +269,7 @@ class DpiVpnService : VpnService() {
 
     private fun healProfile(config: ProfilesConfig, p: Profile) {
         val current = sessionOverrides[p.id] ?: Settings.strategyFor(this, p.id, config.defaultStrategy)
-        val candidates = (listOf("none") + config.strategies).filter { it != current }
+        val candidates = ((if (p.matchAll) emptyList() else listOf("none")) + config.strategies).filter { it != current }
         appendLog("Проблема с ${p.name}, подбираю другую стратегию…")
         val counts = AutoProbe.score(this, listOf(p), candidates, { Thread.currentThread().isInterrupted }) { }
             .getValue(p.id)

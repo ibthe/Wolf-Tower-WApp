@@ -2,84 +2,146 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Wolf Tower</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main>
-    <h1>Wolf Tower</h1>
-    <div id="status" class="muted"></div>
-    <button id="toggle" class="primary full">Запустить</button>
-    <div id="hint" class="muted"></div>
-
-    <section class="card">
-      <h2>Лицензия</h2>
-      <div id="licenseText"></div>
-      <button id="newKeyBtn" class="link" hidden>Ввести новый ключ</button>
-      <div id="keyBox" hidden>
-        <div class="muted small">ID устройства (нужен для ключа с привязкой):</div>
-        <div id="deviceId" class="mono big"></div>
-        <div class="row"><button id="copyId">Копировать ID</button></div>
-        <input id="keyInput" type="text" placeholder="Лицензионный ключ" spellcheck="false" autocomplete="off">
-        <div class="row">
-          <button id="activate">Активировать</button>
-          <button id="paste" class="secondary">Вставить</button>
-        </div>
-        <div id="licenseMsg" class="muted small"></div>
+    <header class="top">
+      <img class="logo" src="logo.png" alt="">
+      <div>
+        <h1>Wolf Tower</h1>
+        <div class="sub">Разблокировка WhatsApp</div>
       </div>
+    </header>
+
+    <section class="hero">
+      <button id="toggle" class="power" aria-label="Включить или выключить защиту">
+        <span class="ring r1"></span>
+        <span class="ring r2"></span>
+        <span class="disc">
+          <svg viewBox="0 0 24 24" class="power-ico" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M12 3.2v8.2"></path>
+            <path d="M7 6.4a7.6 7.6 0 1 0 10 0"></path>
+          </svg>
+        </span>
+      </button>
+      <div id="status" class="headline"></div>
+      <div id="hint" class="muted"></div>
     </section>
 
-    <div id="services"></div>
-
-    <section class="card">
-      <button id="probeBtn" class="secondary full">Подобрать стратегии автоматически</button>
-      <div id="probeProgress" class="muted small"></div>
-      <button id="probeCancel" class="link" hidden>Отмена</button>
-      <pre id="probeReport" class="small"></pre>
-    </section>
-
-    <section class="card" id="tgCard" hidden>
-      <h2>Telegram</h2>
-      <div class="small">
-        Приложение Telegram не использует системный прокси. Добавьте в нём прокси вручную:
-        <b>SOCKS5, адрес 127.0.0.1, порт <span id="tgPort"></span></b> (без логина и пароля), либо нажмите кнопку.
-        Защита должна быть включена.
+    <div id="licenseChip" class="license-chip" hidden>
+      <svg viewBox="0 0 24 24" class="ico key" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="8" cy="8.5" r="4.6"></circle>
+        <path d="M11.4 12l9 9"></path>
+        <path d="M16.4 17l2.6-2.6"></path>
+      </svg>
+      <div>
+        <div id="licTitle" class="lic-title"></div>
+        <div id="licSub" class="muted small"></div>
       </div>
-      <div class="row">
-        <button id="tgAdd">Добавить в Telegram</button>
-        <button id="tgCopy" class="secondary">Копировать адрес</button>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="row between">
-        <h2 id="logTitle">Лог</h2>
-        <button id="logToggle" class="link">Развернуть</button>
-      </div>
-      <div id="logLast" class="muted small ellipsis"></div>
-      <div id="logBox" hidden>
-        <pre id="logText" class="log mono small"></pre>
-        <div class="row">
-          <button id="logCopy" class="secondary">Копировать</button>
-          <button id="logClear" class="secondary">Очистить</button>
-        </div>
-      </div>
-    </section>
-
-    <section class="card small">
-      <b>Что покрывает версия для компьютера.</b> Через защиту идут сайты выбранных сервисов в браузерах и других
-      программах, которые используют системные настройки прокси. Приложения вроде Telegram настраиваются отдельно
-      (см. выше). <span id="platformNote"></span>
-    </section>
-
-    <div class="row">
-      <button id="diag" class="secondary">Скопировать диагностику</button>
-      <button id="licensesToggle" class="link">Лицензии компонентов</button>
     </div>
-    <div id="diagMsg" class="muted small"></div>
-    <pre id="licensesText" class="small" hidden></pre>
+
+    <section class="card" id="keyCard" hidden>
+      <h2>Активация</h2>
+      <div id="licenseText" class="muted small"></div>
+      <div class="muted small">ID устройства (нужен для ключа с привязкой)</div>
+      <div id="deviceId" class="mono idbox"></div>
+      <div class="row">
+        <button id="copyId" class="pill copy">
+          <svg class="ico ico-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="11" height="12" rx="2.5"></rect>
+            <path d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"></path>
+          </svg>
+          <svg class="ico ico-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.5 12.8l5 5 10-11"></path>
+          </svg>
+          <span class="lbl">Копировать ID</span>
+        </button>
+      </div>
+      <input id="keyInput" type="text" placeholder="Лицензионный ключ" spellcheck="false" autocomplete="off">
+      <div class="row">
+        <button id="activate" class="btn">Активировать</button>
+        <button id="paste" class="btn ghost">Вставить</button>
+        <button id="keyCancel" class="btn ghost" hidden>Отмена</button>
+      </div>
+      <div id="licenseMsg" class="amber small"></div>
+    </section>
+
+    <section class="card">
+      <h2>Стратегия обхода</h2>
+      <div id="strategyNow" class="muted small"></div>
+      <button id="probeBtn" class="btn ghost full">Подобрать автоматически</button>
+      <div id="probeProgress" class="muted small"></div>
+      <button id="probeCancel" class="btn ghost" hidden>Отмена</button>
+      <pre id="probeReport" class="small muted"></pre>
+    </section>
+
+    <button id="advToggle" class="adv-toggle">
+      <span>Дополнительно</span>
+      <svg id="advChevron" class="ico chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 9l6 6 6-6"></path>
+      </svg>
+    </button>
+
+    <div id="adv" class="stack" hidden>
+      <section class="card">
+        <h3>Выбрать стратегию вручную</h3>
+        <div id="chips" class="chips"></div>
+        <div class="muted small">Своя строка (формат ByeByeDPI), например: -d1 -s1+s -s3+s -a1</div>
+        <input id="rawInput" type="text" placeholder="Аргументы обхода" spellcheck="false" autocomplete="off">
+        <div id="rawErr" class="amber small"></div>
+        <div class="row"><button id="rawApply" class="btn ghost">Применить</button></div>
+      </section>
+
+      <section class="card">
+        <div class="row between">
+          <h3 id="logTitle">Лог</h3>
+          <button id="logToggle" class="link">Развернуть</button>
+        </div>
+        <div id="logLast" class="muted small ellipsis"></div>
+        <div id="logBox" hidden>
+          <pre id="logText" class="log mono small"></pre>
+          <div class="row">
+            <button id="logCopy" class="pill copy">
+              <svg class="ico ico-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="11" height="12" rx="2.5"></rect>
+                <path d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"></path>
+              </svg>
+              <svg class="ico ico-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4.5 12.8l5 5 10-11"></path>
+              </svg>
+              <span class="lbl">Копировать лог</span>
+            </button>
+            <button id="logClear" class="btn ghost">Очистить</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <button id="newKeyBtn" class="btn ghost full" hidden>Ввести другой ключ</button>
+        <button id="diag" class="pill copy full-pill">
+          <svg class="ico ico-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="11" height="12" rx="2.5"></rect>
+            <path d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"></path>
+          </svg>
+          <svg class="ico ico-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.5 12.8l5 5 10-11"></path>
+          </svg>
+          <span class="lbl">Скопировать диагностику</span>
+        </button>
+        <div class="muted small">В отчёт не попадают IP-адреса, трафик и сам ключ.</div>
+        <button id="licensesToggle" class="link">Лицензии компонентов</button>
+        <pre id="licensesText" class="small muted" hidden></pre>
+      </section>
+
+      <section class="card small muted">
+        <b>Что покрывает версия для компьютера.</b> Через защиту идёт WhatsApp Web в браузерах и в других программах,
+        которые используют системные настройки прокси. <span id="platformNote"></span>
+      </section>
+    </div>
   </main>
   <script src="renderer.js"></script>
 </body>

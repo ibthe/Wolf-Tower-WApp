@@ -35,15 +35,21 @@ const root = path.join(__dirname, '..', '..');
 const config = loadConfig([path.join(root, 'profiles', 'profiles.json')]);
 
 (async () => {
-  await test('профили и стратегии загружаются, по умолчанию disorder', () => {
-    assert(config.profiles.length >= 4);
-    assert.strictEqual(config.defaultStrategy, 'disorder');
+  await test('профили и стратегии загружаются, по умолчанию chain+udp', () => {
+    assert.deepStrictEqual(config.profiles.map((p) => p.id), ['whatsapp']);
+    assert.strictEqual(config.defaultStrategy, 'chain+udp');
     assert.deepStrictEqual(forName('fake+oob'), ['-f-1', '-t', '8', '-o1+s']);
     assert.deepStrictEqual(forName('none'), []);
   });
 
   await test('группы ByeDPI: как в Android (hosts, ipset, --auto=none)', () => {
-    const by = (id) => config.profiles.find((p) => p.id === id);
+    // продукт теперь только про WhatsApp, поэтому схему групп проверяем на искусственных профилях
+    const mk = (id, domains, ipRanges = []) => ({ id, name: id, domains, ipRanges, probeHosts: [], blockQuic: false, matchAll: false });
+    const by = (id) => ({
+      whatsapp: mk('whatsapp', ['whatsapp.com', 'whatsapp.net']),
+      youtube: mk('youtube', ['youtube.com', 'googlevideo.com']),
+      telegram: mk('telegram', [], ['91.108.4.0/22']),
+    })[id];
     const out = buildGroups([
       { profile: by('whatsapp'), strategy: 'disorder' },
       { profile: by('youtube'), strategy: 'none' },
@@ -65,7 +71,7 @@ const config = loadConfig([path.join(root, 'profiles', 'profiles.json')]);
     assert.deepStrictEqual(out.slice(0, 2), ['-d1', '-s1+s']);
     assert.strictEqual(out[out.length - 1], '-a1');
     // вместе с другим сервисом возвращается разбиение по группам
-    const yt = config.profiles.find((p) => p.id === 'youtube');
+    const yt = { id: 'youtube', name: 'youtube', domains: ['youtube.com'], ipRanges: [], probeHosts: [], blockQuic: false, matchAll: false };
     const two = buildGroups([{ profile: wa, strategy: 'disorder' }, { profile: yt, strategy: 'split' }]);
     assert.strictEqual(two[0], '--hosts');
   });
@@ -269,9 +275,8 @@ const config = loadConfig([path.join(root, 'profiles', 'profiles.json')]);
     fs.copyFileSync(bin, path.join(resDir, 'bin', process.platform, process.platform === 'win32' ? 'ciadpi.exe' : 'ciadpi'));
     fs.chmodSync(path.join(resDir, 'bin', process.platform, 'ciadpi'), 0o755);
     const store = new Store(path.join(tmp, 'eng'));
-    store.set('enabled', ['whatsapp', 'telegram']);
-    store.set('strategy_whatsapp', 'disorder');
-    store.set('strategy_telegram', 'oob');
+    store.set('enabled', ['whatsapp']);
+    store.set('strategy_whatsapp', 'chain+udp');
     store.set('socksPort', await freePort());
     const engine = new Engine({ resourcesDir: resDir, store, config });
     const logs = [];

@@ -8,18 +8,10 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-    <!-- чтобы видеть, какие из приложений профилей установлены -->
+    <!-- чтобы видеть, установлен ли WhatsApp -->
     <queries>
-        <package android:name="com.google.android.youtube" />
-        <package android:name="com.google.android.apps.youtube.music" />
-        <package android:name="com.google.android.gms" />
         <package android:name="com.whatsapp" />
         <package android:name="com.whatsapp.w4b" />
-        <package android:name="com.instagram.android" />
-        <package android:name="com.instagram.lite" />
-        <package android:name="org.telegram.messenger" />
-        <package android:name="org.telegram.messenger.web" />
-        <package android:name="org.thunderdog.challegram" />
     </queries>
 
     <application
@@ -27,7 +19,8 @@
         android:label="Wolf Tower"
         android:extractNativeLibs="true"
         android:allowBackup="false"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/Theme.WolfTower">
 
         <activity android:name=".MainActivity" android:exported="true">
             <intent-filter>

@@ -6,11 +6,11 @@ import android.content.Context
 object Settings {
     private fun prefs(ctx: Context) = ctx.getSharedPreferences("dpi", Context.MODE_PRIVATE)
 
-    fun enabledIds(ctx: Context): Set<String> =
-        prefs(ctx).getStringSet("enabled", emptySet()) ?: emptySet()
+    /** Продукт защищает только WhatsApp: единственный сервис всегда включён, выбора нет. */
+    const val SERVICE_ID = "whatsapp"
 
-    fun setEnabledIds(ctx: Context, ids: Set<String>) =
-        prefs(ctx).edit().putStringSet("enabled", ids).apply()
+    @Suppress("UNUSED_PARAMETER")
+    fun enabledIds(ctx: Context): Set<String> = setOf(SERVICE_ID)
 
     /**
      * Стратегия сервиса для ТЕКУЩЕЙ сети: сначала то, что запомнено для этой сети, затем общий выбор.
@@ -33,14 +33,12 @@ object Settings {
             .apply()
     }
 
-    /** null = автоматически (по block_quic выбранных сервисов). */
-    fun blockQuicPref(ctx: Context): Boolean? {
-        val p = prefs(ctx)
-        return if (p.contains("block_quic")) p.getBoolean("block_quic", false) else null
-    }
-
-    fun setBlockQuic(ctx: Context, value: Boolean) =
-        prefs(ctx).edit().putBoolean("block_quic", value).apply()
+    /**
+     * Блокировка QUIC (UDP) в продукте отключена: она ломает звонки WhatsApp, а в интерфейсе
+     * переключателя больше нет. Всегда "авто" (null), старые сохранённые значения игнорируются.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun blockQuicPref(ctx: Context): Boolean? = null
 
     fun dohEnabled(ctx: Context): Boolean = prefs(ctx).getBoolean("doh", false)
 

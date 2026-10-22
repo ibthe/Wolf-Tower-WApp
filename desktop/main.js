@@ -2,7 +2,7 @@ const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, clipboard, shell }
 const fs = require('fs');
 const path = require('path');
 const { Store } = require('./src/store');
-const { loadConfig, forName } = require('./src/profiles');
+const { loadConfig, forName, parseRaw } = require('./src/profiles');
 const { Engine, ByeDpi, freePort } = require('./src/engine');
 const { License, readMachineId, loadPublicKey } = require('./src/license');
 const autoprobe = require('./src/autoprobe');
@@ -28,7 +28,7 @@ let probe = { running: false, done: false, progress: '', report: '', scores: {} 
 let clockTimer = null;
 const logs = [];
 
-const enabledIds = () => store.get('enabled', []);
+const enabledIds = () => config.profiles.map((p) => p.id); // только WhatsApp: выбора сервисов нет
 const strategyFor = (id) => store.get('strategy_' + id, config.defaultStrategy);
 
 function appendLog(msg) {
@@ -51,7 +51,14 @@ function snapshot() {
     strategies: config.strategies,
     enabled: enabledIds(),
     chosen,
-    license: { text: license.describe(st), licensed: st.kind === 'licensed', deviceId: license.deviceId },
+    license: {
+      text: license.describe(st),
+      licensed: st.kind === 'licensed',
+      deviceId: license.deviceId,
+      plan: st.kind === 'licensed' ? st.plan : null,
+      until: st.kind === 'licensed' ? st.until : null,
+      untilMs: st.kind === 'licensed' ? st.untilMs : null,
+    },
     probe,
     port: engine.socksPort || store.get('socksPort', 18080),
   };
@@ -133,7 +140,8 @@ async function runProbe() {
           lines.push(`${p.name}: нет адресов для проверки`);
           continue;
         }
-        const { best, ok } = autoprobe.chooseBest(counts[p.id], candidates);
+        // Проба смотрит только TLS: для match_all-сервиса (WhatsApp) "без обхода" не выбираем (чат идёт без SNI)
+        const { best, ok } = autoprobe.chooseBest(counts[p.id], p.matchAll ? candidates.filter((c) => c !== 'none') : candidates);
         if (!best) {
           lines.push(`${p.name}: ничего не сработало (0/${total}). Возможна блокировка по IP или подмена DNS.`);
         } else {
@@ -256,18 +264,14 @@ ipcMain.handle('log:get', () => logs.slice());
 ipcMain.handle('log:clear', () => {
   logs.length = 0;
 });
-ipcMain.handle('profile:toggle', (_e, id, on) => {
-  if (engine.running) return;
-  const ids = new Set(enabledIds());
-  if (on) ids.add(id);
-  else ids.delete(id);
-  store.set('enabled', [...ids]);
-  pushState();
-});
 ipcMain.handle('profile:strategy', (_e, id, s) => {
-  if (engine.running) return;
-  if (s === 'none' || config.strategies.includes(s)) store.set('strategy_' + id, s);
+  if (engine.running) return false;
+  if (!config.profiles.some((p) => p.id === id) || typeof s !== 'string') return false;
+  // своя строка в стиле ByeByeDPI: "raw:-d1 -s1+s -a1" (только флаги обхода, см. parseRaw)
+  const ok = s === 'none' || config.strategies.includes(s) || (s.startsWith('raw:') && parseRaw(s.slice(4)) !== null);
+  if (ok) store.set('strategy_' + id, s);
   pushState();
+  return ok;
 });
 ipcMain.handle('protection:toggle', () => toggleProtection());
 ipcMain.handle('license:activate', async (_e, key) => {
@@ -281,10 +285,6 @@ ipcMain.handle('probe:cancel', () => {
 });
 ipcMain.handle('copy', (_e, text) => clipboard.writeText(String(text)));
 ipcMain.handle('paste', () => clipboard.readText());
-ipcMain.handle('telegram:add', () => {
-  const port = engine.socksPort || store.get('socksPort', 18080);
-  return shell.openExternal(`tg://socks?server=127.0.0.1&port=${port}`);
-});
 ipcMain.handle('licenses:get', () => {
   try {
     return fs.readFileSync(path.join(resourcesDir, 'third_party_licenses.txt'), 'utf8');
