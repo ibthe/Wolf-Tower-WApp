@@ -8,7 +8,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.wolftower.app"
+        applicationId = "com.wolftower.wapp"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
