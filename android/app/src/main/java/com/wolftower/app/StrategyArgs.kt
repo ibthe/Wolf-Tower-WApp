@@ -32,6 +32,28 @@ object StrategyArgs {
         "disorder0+udp" to listOf("-d1", "-a1"),
         "split+udp" to listOf("-s1+s", "-a1"),
         "disorder+udp" to listOf("-d1+s", "-a1"),
+        // Каталог для WhatsApp: сообщество (ByeByeDPI/ByeDPI, 4PDA) и свои варианты; проверены на ciadpi из third_party
+        "abs+udp" to listOf("-d1", "-s3", "-s6", "-s10", "-s16", "-s24", "-a1"), // своя: абсолютные смещения, режет и TLS, и чат без SNI
+        "abs-sni+udp" to listOf("-d1", "-s3", "-s6", "-s10", "-s16", "-s24", "-s1+s", "-s3+s", "-s6+s", "-s12+s", "-s20+s", "-a1"), // своя: абсолютные + от SNI
+        "chain-d+udp" to listOf("-d1", "-s1+s", "-d3+s", "-s6+s", "-d9+s", "-s12+s", "-d15+s", "-s20+s", "-d25+s", "-s30+s", "-d35+s", "-a1"), // сообщество (4PDA), whatsapp.com
+        "chain-r+udp" to listOf("-d1", "-d3+s", "-s6+s", "-d9+s", "-s12+s", "-d15+s", "-s20+s", "-d25+s", "-s30+s", "-d35+s", "-r1+s", "-S", "-a1"), // сообщество (ByeByeDPI, список по умолчанию)
+        "light+udp" to listOf("-d1", "-r1+s", "-a1"), // byebyedpi.org, лёгкая
+        "abs-fake8+udp" to listOf("-d1", "-s3", "-s6", "-s10", "-s16", "-s24", "-f-1", "-t8", "-a1"), // своя: абсолютные + фейк TTL 8 в конце
+        "abs-split+udp" to listOf("-s1", "-s3", "-s5", "-s8", "-s12", "-s18", "-s26", "-a1"), // своя: только разбиение
+        "drip+udp" to listOf("-s1", "-s2", "-s3", "-s4", "-s5", "-s6", "-s7", "-s8", "-s12", "-s20", "-a1"), // своя: мелкие кусочки по 1 байту
+        "abs-disorder+udp" to listOf("-d1", "-d4", "-d9", "-d16", "-s24", "-a1"), // своя: перестановка частей
+        "abs-oob+udp" to listOf("-o1", "-s4", "-s9", "-s15", "-s24", "-a1"), // своя: OOB + разбиение
+        "abs-disoob+udp" to listOf("-q1", "-s4", "-s9", "-s15", "-s24", "-a1"), // своя: обратный OOB + разбиение
+        "abs-fake5+udp" to listOf("-d1", "-s3", "-s6", "-s10", "-s16", "-s24", "-f-1", "-t5", "-a1"), // своя: абсолютные + фейк TTL 5 в конце
+        "abs-udp3" to listOf("-d1", "-s3", "-s6", "-s10", "-s16", "-s24", "-a3"), // своя: 3 поддельных UDP-пакета для звонков
+        "chain+udp2" to CHAIN + "-a2", // ваша строка, 2 поддельных UDP-пакета (как repeats=2 в zapret для STUN)
+        "tlsrec+udp" to listOf("-r5+s", "-s25+s", "-a1"), // сообщество (Ростелеком), только TLS
+        "tlsrec-abs+udp" to listOf("-d1", "-r5+s", "-s25+s", "-a1"), // своя: Ростелеком + абсолютное смещение
+        "tlsrec-s50+udp" to listOf("-s50", "-r5+s", "-s50+s", "-a1", "-r10+s"), // сообщество (Ростелеком)
+        "oob-r+udp" to listOf("-q1", "-r25+s", "-a1"), // сообщество (ByeDPI #423)
+        "oob2+udp" to listOf("-o2", "-o25+s", "-a1"), // сообщество (ByeDPIAndroid #392, WhatsApp, январь 2026)
+        "fake8+udp" to listOf("-f-1", "-t8", "-a1"), // byebyedpi.org, агрессивная
+        "mix+udp3" to listOf("-a3", "-o1", "-d1", "-r1+s", "-s1+s", "-s3+s", "-s6+s", "-s9+s", "-s12+s", "-s15+s", "-s20+s", "-s30+s"), // сообщество (Билайн, Москва), упрощена
     )
 
     /** Своя строка в стиле ByeByeDPI: имя стратегии вида "raw:-d1 -s1+s -a1". */

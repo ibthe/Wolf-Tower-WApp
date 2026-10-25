@@ -95,6 +95,23 @@ const config = loadConfig([path.join(root, 'profiles', 'profiles.json')]);
     }
   });
 
+  await test('каталог стратегий Android (Kotlin) и desktop (JS) совпадает', () => {
+    const ktPath = path.join(__dirname, '..', '..', 'android', 'app', 'src', 'main', 'java', 'com', 'wolftower', 'app', 'StrategyArgs.kt');
+    if (!fs.existsSync(ktPath)) return; // desktop собирается и отдельно от Android
+    const kt = fs.readFileSync(ktPath, 'utf8');
+    const quoted = (s) => [...s.matchAll(/"([^"]*)"/g)].map((m) => m[1]);
+    const chain = quoted(kt.match(/val CHAIN = listOf\(([^)]*)\)/)[1]);
+    const lib = {};
+    for (const m of kt.matchAll(/^\s*"([^"]+)" to (CHAIN \+ "[^"]*"|CHAIN|listOf\(([^)]*)\)),/gm)) {
+      const expr = m[2];
+      lib[m[1]] = expr.startsWith('CHAIN') ? chain.concat(quoted(expr.slice(5))) : quoted(m[3]);
+    }
+    const { LIBRARY } = require('../src/profiles');
+    assert.deepStrictEqual(Object.keys(lib).sort(), Object.keys(LIBRARY).sort());
+    for (const k of Object.keys(lib)) assert.deepStrictEqual(lib[k], LIBRARY[k], k);
+    for (const name of config.strategies) assert(lib[name], 'нет в Kotlin: ' + name);
+  });
+
   await test('PAC: только домены выбранных сервисов идут через прокси', () => {
     const pac = buildPac(['youtube.com', 'bad domain;"'], 18080);
     assert(!pac.includes('bad domain'), 'мусорные домены отбрасываются');
