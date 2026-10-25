@@ -17,7 +17,7 @@ class VpnTileService : TileService() {
     private fun refresh() {
         val tile = qsTile ?: return
         tile.state = if (DpiVpnService.running.value) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
-        tile.label = "Wolf Tower"
+        tile.label = "Wolf Tower WA"
         tile.updateTile()
     }
 
