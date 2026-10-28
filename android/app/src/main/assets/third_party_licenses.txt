@@ -112,3 +112,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+=================== zapret (tpws) ===================
+Copyright (c) bol-van
+Лицензия MIT (текст выше такой же, как у других компонентов с лицензией MIT).
+Исходный код: https://github.com/bol-van/zapret
+Включается в сборку необязательным шагом GitHub Actions; если шаг не выполнился, tpws в приложении нет.
+
+=================== sing-box ===================
+Copyright (C) SagerNet и участники проекта sing-box
+Лицензия GNU General Public License версии 3 или более поздней (GPL-3.0-or-later):
+https://www.gnu.org/licenses/gpl-3.0.html
+Исходный код: https://github.com/SagerNet/sing-box (версия указана в логе шага «Fetch sing-box» сборки).
+Включается в сборку необязательным шагом GitHub Actions как отдельный исполняемый файл (libsingbox.so),
+который запускается как отдельный процесс. Если шаг не выполнился, sing-box в приложении нет.
+Бесплатный режим WARP использует сервис Cloudflare WARP; его условия: https://www.cloudflare.com/application/terms/

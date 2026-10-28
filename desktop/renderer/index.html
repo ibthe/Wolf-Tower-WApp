@@ -70,7 +70,7 @@
       <div id="licenseMsg" class="amber small"></div>
     </section>
 
-    <section class="card">
+    <section class="card" id="strategyCard">
       <h2>Стратегия обхода</h2>
       <div id="strategyNow" class="muted small"></div>
       <button id="probeBtn" class="btn ghost full">Подобрать автоматически</button>
@@ -87,6 +87,21 @@
     </button>
 
     <div id="adv" class="stack" hidden>
+      <section class="card">
+        <h3>Способ обхода</h3>
+        <div class="chips">
+          <button id="engByedpi" class="chip">ByeDPI (встроенный)</button>
+          <button id="engSocks" class="chip">Свой SOCKS5-прокси</button>
+        </div>
+        <div id="proxyBox" class="col" hidden>
+          <div class="muted small">Домены WhatsApp пойдут через системный прокси сразу на указанный SOCKS5: Xray, sing-box, Hiddify, v2rayNG в режиме прокси, Tor (127.0.0.1:9050) или свой сервер. Логин и пароль на компьютере не поддерживаются. Встроенный ByeDPI при этом не используется.</div>
+          <input id="proxyHost" type="text" placeholder="Адрес (например 127.0.0.1)" spellcheck="false" autocomplete="off">
+          <input id="proxyPort" type="text" placeholder="Порт" spellcheck="false" autocomplete="off">
+          <div id="proxyMsg" class="amber small"></div>
+          <div class="row"><button id="proxySave" class="btn ghost">Сохранить прокси</button></div>
+        </div>
+      </section>
+
       <section class="card">
         <h3>Выбрать стратегию вручную</h3>
         <div id="chips" class="chips"></div>

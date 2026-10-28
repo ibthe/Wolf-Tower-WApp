@@ -56,6 +56,11 @@ class DpiVpnService : VpnService() {
     /** Порт, к которому подключается tun2socks (за ним стоит ByeDPI или DoH-прокси). Новый при каждом запуске. */
     private var socksPort = 0
     private var byePort = 0
+    private var local: LocalProcess? = null // tpws или sing-box
+
+    /** true: трафик идёт через свой SOCKS5-прокси пользователя, ByeDPI не запускается. */
+    @Volatile
+    private var external = false
 
     /** Стратегии, временно подобранные самопроверкой в этом сеансе (в настройки не записываются). */
     private val sessionOverrides = java.util.concurrent.ConcurrentHashMap<String, String>()
@@ -94,34 +99,44 @@ class DpiVpnService : VpnService() {
             fail("Нужен лицензионный ключ")
             return
         }
-        val args = buildByeArgs()
+        if (Settings.engine(this) == Settings.ENGINE_SOCKS5 && !Settings.proxyConfigured(this)) {
+            fail("Не задан адрес SOCKS5-прокси (Дополнительно → Способ обхода)")
+            return
+        }
+        val engine = Settings.engine(this)
+        val socksMode = engine == Settings.ENGINE_SOCKS5
+        external = engine != Settings.ENGINE_BYEDPI
+        val args = if (external) emptyList<String>() else buildByeArgs()
         if (args == null) {
             fail("Не выбран ни один сервис")
             return
         }
         goForeground()
 
-        val doh = Settings.dohEnabled(this)
+        val doh = !external && Settings.dohEnabled(this)
         sessionOverrides.clear()
         socksPort = Ports.free()
         byePort = if (doh) Ports.free() else socksPort
 
-        val proc = ByeDpiProcess(this)
-        if (!proc.start(byePort, args, ::appendLog)) {
-            fail("ByeDPI не запустился")
-            return
-        }
-        synchronized(lock) { byeDpi = proc }
-
-        if (doh) {
-            val s = DohSocksShim(socksPort, byePort, ::appendLog)
-            if (!s.start()) {
-                fail("DoH-прокси не запустился")
+        if (!external) {
+            val proc = ByeDpiProcess(this)
+            if (!proc.start(byePort, args, ::appendLog)) {
+                fail("ByeDPI не запустился")
                 return
             }
-            shim = s
-            appendLog("DoH включён: UDP и QUIC отключены")
+            synchronized(lock) { byeDpi = proc }
+
+            if (doh) {
+                val s = DohSocksShim(socksPort, byePort, ::appendLog)
+                if (!s.start()) {
+                    fail("DoH-прокси не запустился")
+                    return
+                }
+                shim = s
+                appendLog("DoH включён: UDP и QUIC отключены")
+            }
         }
+        if (external && !socksMode && !startOtherEngine(engine)) return
 
         val config = ProfilesRepository.load(this)
         val chosen = config.profiles.filter { it.id in Settings.enabledIds(this) }
@@ -147,7 +162,12 @@ class DpiVpnService : VpnService() {
             return
         }
         tun = fd
-        if (!tun2socks.start(fd, "127.0.0.1", socksPort, ::appendLog)) {
+        val upHost = if (socksMode) Settings.proxyHost(this) else "127.0.0.1"
+        val upPort = if (socksMode) Settings.proxyPort(this) else socksPort
+        val upUser = if (socksMode) Settings.proxyUser(this) else null
+        val upPass = if (socksMode) Settings.proxyPass(this) else null
+        if (socksMode) appendLog("Свой SOCKS5-прокси: $upHost:$upPort")
+        if (!tun2socks.start(fd, upHost, upPort, ::appendLog, upUser, upPass)) {
             fail("Туннель не запустился")
             return
         }
@@ -253,7 +273,7 @@ class DpiVpnService : VpnService() {
      * открывается (дважды с паузой), подбирается другая стратегия только для него и ByeDPI перезапускается.
      */
     private fun healthCheck() {
-        if (!running.value) return
+        if (!running.value || external) return
         val config = ProfilesRepository.load(this)
         val chosen = config.profiles.filter { it.id in Settings.enabledIds(this) && it.probeHosts.isNotEmpty() }
         for (p in chosen) {
@@ -342,6 +362,7 @@ class DpiVpnService : VpnService() {
         if (fp == "none" || fp == currentFp) return
         currentFp = fp
         appendLog("Сеть сменилась: ${NetId.describe(this)}")
+        if (external) return
         restartByeDpi() // стратегии для новой сети берутся из памяти, если для неё уже подбирали
         executor?.schedule(safe { healthCheck() }, 20, TimeUnit.SECONDS)
     }
@@ -349,6 +370,36 @@ class DpiVpnService : VpnService() {
     // ---------------------------------------------------------------- остановка
 
     /** Безопасно вызывать несколько раз: каждый шаг защищён, чтобы остановка не роняла приложение. */
+    /** tpws и sing-box: локальный SOCKS5 на socksPort, к нему подключается tun2socks. */
+    private fun startOtherEngine(engine: String): Boolean {
+        val proc = LocalProcess(if (engine == Settings.ENGINE_TPWS) "tpws" else "sing-box")
+        val ok = when (engine) {
+            Settings.ENGINE_TPWS -> {
+                val bin = NativeBin.file(this, NativeBin.TPWS)
+                if (!bin.isFile) {
+                    fail("Движок zapret tpws не вошёл в эту сборку")
+                    return false
+                }
+                val args = TpwsArgs.forName(Settings.tpwsStrategy(this))
+                appendLog("Запуск tpws на порту $socksPort: ${args.joinToString(" ")}")
+                proc.start(
+                    listOf(bin.path, "--socks", "--bind-addr=127.0.0.1", "--port=$socksPort", "--maxconn=1024") + args,
+                    socksPort,
+                    ::appendLog,
+                    3000,
+                )
+            }
+            Settings.ENGINE_SB_FRAG, Settings.ENGINE_SB_WARP -> SingBoxRunner.start(this, engine, socksPort, proc, ::appendLog)
+            else -> false
+        }
+        if (!ok) {
+            fail("Движок не запустился, подробности в логе")
+            return false
+        }
+        synchronized(lock) { local = proc }
+        return true
+    }
+
     private fun stopAll() {
         runCatching { executor?.shutdownNow() }
         executor = null
@@ -359,6 +410,8 @@ class DpiVpnService : VpnService() {
         synchronized(lock) {
             runCatching { byeDpi?.stop() }
             byeDpi = null
+            runCatching { local?.stop() }
+            local = null
         }
         runCatching { tun?.close() }
         tun = null

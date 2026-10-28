@@ -4,7 +4,7 @@ const fs = require('fs');
 const net = require('net');
 const path = require('path');
 const { buildGroups } = require('./profiles');
-const { PacServer } = require('./pac');
+const { PacServer, HOST_OK } = require('./pac');
 const sysproxy = require('./sysproxy');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -157,6 +157,36 @@ class Engine extends EventEmitter {
       .map((profile) => ({ profile, strategy: this.strategyFor(profile.id) }));
   }
 
+  /** Свой SOCKS5-прокси (Xray, sing-box, Tor и т. д.), если выбран и задан корректно; иначе null. */
+  upstream() {
+    if (this.store.get('engine', 'byedpi') !== 'socks5') return null;
+    const host = this.store.get('proxyHost', '');
+    const port = this.store.get('proxyPort', 0);
+    if (typeof host !== 'string' || !HOST_OK.test(host) || !Number.isInteger(port) || port < 1 || port > 65535) return null;
+    return { host, port };
+  }
+
+  /** Вместо ByeDPI: домены WhatsApp идут через системный прокси сразу на указанный SOCKS5. */
+  async startExternal(sel, up) {
+    this.log(`Свой SOCKS5-прокси: ${up.host}:${up.port} (встроенный ByeDPI не используется)`);
+    try {
+      await this.pac.start();
+      this.pac.update(sel.flatMap((s) => s.profile.domains), up.port, up.host);
+      if (!this.store.get('sysproxyInstalled', false)) {
+        await sysproxy.install(this.pac.url, this.store, (m) => this.log(m));
+      }
+    } catch (e) {
+      this.log('Не удалось настроить системный прокси: ' + e.message);
+      this.pac.update([], 0);
+      return false;
+    }
+    this.socksPort = up.port;
+    this.running = true;
+    this.log(`Защита включена. SOCKS5 ${up.host}:${up.port}`);
+    this.emit('changed');
+    return true;
+  }
+
   async start() {
     if (this.running) return true;
     const sel = this.selection();
@@ -164,6 +194,8 @@ class Engine extends EventEmitter {
       this.log('Не выбран ни один сервис');
       return false;
     }
+    const up = this.upstream();
+    if (up) return this.startExternal(sel, up);
     this.log('Стратегии: ' + sel.map((s) => `${s.profile.name}=${s.strategy}`).join(', '));
     const args = buildGroups(sel);
 

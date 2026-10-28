@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { Store } = require('./src/store');
 const { loadConfig, forName, parseRaw } = require('./src/profiles');
+const { HOST_OK } = require('./src/pac');
 const { Engine, ByeDpi, freePort } = require('./src/engine');
 const { License, readMachineId, loadPublicKey } = require('./src/license');
 const autoprobe = require('./src/autoprobe');
@@ -51,6 +52,9 @@ function snapshot() {
     strategies: config.strategies,
     enabled: enabledIds(),
     chosen,
+    engine: store.get('engine', 'byedpi'),
+    proxyHost: store.get('proxyHost', ''),
+    proxyPort: store.get('proxyPort', 0),
     license: {
       text: license.describe(st),
       licensed: st.kind === 'licensed',
@@ -263,6 +267,21 @@ ipcMain.handle('state:get', () => snapshot());
 ipcMain.handle('log:get', () => logs.slice());
 ipcMain.handle('log:clear', () => {
   logs.length = 0;
+});
+ipcMain.handle('engine:set', (_e, kind, host, port) => {
+  if (engine.running) return 'Сначала выключите защиту';
+  if (kind !== 'byedpi' && kind !== 'socks5') return 'Неизвестный способ обхода';
+  if (kind === 'socks5') {
+    const p = Number(port);
+    if (typeof host !== 'string' || !HOST_OK.test(host) || !Number.isInteger(p) || p < 1 || p > 65535) {
+      return 'Проверьте адрес и порт (адрес: буквы, цифры, точки)';
+    }
+    store.set('proxyHost', host);
+    store.set('proxyPort', p);
+  }
+  store.set('engine', kind);
+  pushState();
+  return null;
 });
 ipcMain.handle('profile:strategy', (_e, id, s) => {
   if (engine.running) return false;

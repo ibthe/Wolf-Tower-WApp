@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('wt', {
   getState: () => ipcRenderer.invoke('state:get'),
   getLogs: () => ipcRenderer.invoke('log:get'),
   setStrategy: (id, s) => ipcRenderer.invoke('profile:strategy', id, s),
+  setEngine: (engine, host, port) => ipcRenderer.invoke('engine:set', engine, host, port),
   toggleProtection: () => ipcRenderer.invoke('protection:toggle'),
   activate: (key) => ipcRenderer.invoke('license:activate', key),
   startProbe: () => ipcRenderer.invoke('probe:start'),

@@ -25,9 +25,13 @@ class HevTun2Socks(private val ctx: Context) : Tun2Socks {
         socksHost: String,
         socksPort: Int,
         onLog: (String) -> Unit,
+        user: String?,
+        pass: String?,
     ): Boolean {
         val second = 64 + Random.nextInt(64) // 100.64.x.x .. 100.127.x.x
         val cfg = File(ctx.filesDir, "hev.yml")
+        fun q(s: String) = "'" + s.replace("'", "''") + "'" // строка YAML в одинарных кавычках
+        val auth = if (!user.isNullOrEmpty()) "\n              username: ${q(user)}\n              password: ${q(pass ?: "")}" else ""
         cfg.writeText(
             """
             tunnel:
@@ -36,7 +40,7 @@ class HevTun2Socks(private val ctx: Context) : Tun2Socks {
             socks5:
               port: $socksPort
               address: $socksHost
-              udp: 'udp'
+              udp: 'udp'$auth
             mapdns:
               address: $MAPDNS_ADDRESS
               port: 53

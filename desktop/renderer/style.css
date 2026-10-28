@@ -117,3 +117,5 @@ input[type=text]:focus { border-color: var(--green); }
 }
 .chip.on { background: var(--deep); border-color: var(--green); color: #fff; }
 .chip:disabled { opacity: .5; cursor: default; }
+
+.col { display: flex; flex-direction: column; gap: 10px; }

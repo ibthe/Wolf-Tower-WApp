@@ -3,9 +3,13 @@ const http = require('http');
 const DOMAIN_OK = /^[a-z0-9.-]+$/i;
 
 /** PAC-файл: через ByeDPI идут только домены выбранных сервисов, всё остальное напрямую. */
-function buildPac(domains, port) {
+const HOST_OK = /^[A-Za-z0-9._:-]{1,253}$/;
+
+function buildPac(domains, port, host = '127.0.0.1') {
+  if (typeof host !== 'string' || !HOST_OK.test(host)) host = '127.0.0.1';
   const list = domains.filter((d) => DOMAIN_OK.test(d)).map((d) => d.toLowerCase());
-  const proxy = `SOCKS5 127.0.0.1:${port}; SOCKS 127.0.0.1:${port}; DIRECT`;
+  const hp = host.includes(':') ? `[${host}]` : host; // IPv6-адрес в скобках
+  const proxy = `SOCKS5 ${hp}:${port}; SOCKS ${hp}:${port}; DIRECT`;
   return (
     'function FindProxyForURL(url, host) {\n' +
     '  host = host.toLowerCase();\n' +
@@ -44,8 +48,8 @@ class PacServer {
   }
 
   /** domains пустой: все запросы идут напрямую (защита выключена). */
-  update(domains, socksPort) {
-    this.content = buildPac(domains, socksPort);
+  update(domains, socksPort, host = '127.0.0.1') {
+    this.content = buildPac(domains, socksPort, host);
   }
 
   async stop() {
@@ -56,4 +60,4 @@ class PacServer {
   }
 }
 
-module.exports = { buildPac, PacServer };
+module.exports = { buildPac, PacServer, HOST_OK };

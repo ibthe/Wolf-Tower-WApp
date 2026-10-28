@@ -112,6 +112,43 @@ const config = loadConfig([path.join(root, 'profiles', 'profiles.json')]);
     for (const name of config.strategies) assert(lib[name], 'нет в Kotlin: ' + name);
   });
 
+  await test('PAC: свой SOCKS5 (адрес проверяется, IPv6 в скобках)', () => {
+    const pac = buildPac(['whatsapp.com'], 9050, 'proxy.example.org');
+    assert(pac.includes('SOCKS5 proxy.example.org:9050'));
+    // подозрительный адрес не попадает в код PAC
+    const bad = buildPac(['whatsapp.com'], 9050, '1.2.3.4"; evil()//');
+    assert(!bad.includes('evil') && bad.includes('SOCKS5 127.0.0.1:9050'));
+    assert(buildPac(['whatsapp.com'], 1080, '::1').includes('SOCKS5 [::1]:1080'));
+    const ctx = { dnsDomainIs: (h, d) => h.endsWith(d) };
+    vm.runInNewContext(pac, ctx);
+    assert(ctx.FindProxyForURL('https://web.whatsapp.com/', 'web.whatsapp.com').startsWith('SOCKS5 proxy.example.org:9050'));
+    assert.strictEqual(ctx.FindProxyForURL('https://example.com/', 'example.com'), 'DIRECT');
+  });
+
+  await test('движок «свой SOCKS5»: запуск без ByeDPI, PAC ведёт на указанный адрес', async () => {
+    const { Engine } = require('../src/engine');
+    const data = { engine: 'socks5', proxyHost: '127.0.0.1', proxyPort: 9050, sysproxyInstalled: true };
+    const store = { get: (k, d) => (k in data ? data[k] : d), set: (k, v) => { data[k] = v; } };
+    const eng = new Engine({ resourcesDir: os.tmpdir(), store, config });
+    assert.deepStrictEqual(eng.upstream(), { host: '127.0.0.1', port: 9050 });
+    assert.strictEqual(await eng.start(), true);
+    assert(eng.running && eng.bye === null);
+    const body = await new Promise((resolve, reject) => {
+      http.get(eng.pac.url, (res) => { let s = ''; res.on('data', (d) => (s += d)); res.on('end', () => resolve(s)); }).on('error', reject);
+    });
+    assert(body.includes('SOCKS5 127.0.0.1:9050') && body.includes('whatsapp.com'));
+    await eng.stop();
+    assert(!eng.running);
+    await eng.pac.stop();
+    // некорректные настройки: режим не включается
+    data.proxyHost = 'bad host;';
+    assert.strictEqual(eng.upstream(), null);
+    data.proxyHost = '127.0.0.1'; data.proxyPort = 70000;
+    assert.strictEqual(eng.upstream(), null);
+    data.engine = 'byedpi'; data.proxyPort = 9050;
+    assert.strictEqual(eng.upstream(), null);
+  });
+
   await test('PAC: только домены выбранных сервисов идут через прокси', () => {
     const pac = buildPac(['youtube.com', 'bad domain;"'], 18080);
     assert(!pac.includes('bad domain'), 'мусорные домены отбрасываются');

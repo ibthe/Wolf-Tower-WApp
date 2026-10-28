@@ -106,6 +106,19 @@ class MainActivity : ComponentActivity() {
         var showLicenses by remember { mutableStateOf(false) }
         var advancedOpen by remember { mutableStateOf(false) }
         var logOpen by remember { mutableStateOf(false) }
+        var engine by remember { mutableStateOf(Settings.engine(ctx)) }
+        var proxyHost by remember { mutableStateOf(Settings.proxyHost(ctx)) }
+        var proxyPort by remember { mutableStateOf(Settings.proxyPort(ctx).let { if (it == 0) "" else it.toString() }) }
+        var proxyUser by remember { mutableStateOf(Settings.proxyUser(ctx)) }
+        var proxyPass by remember { mutableStateOf(Settings.proxyPass(ctx)) }
+        var proxyMsg by remember { mutableStateOf<String?>(null) }
+        val hasTpws = remember { NativeBin.available(ctx, NativeBin.TPWS) }
+        val hasSingBox = remember { NativeBin.available(ctx, NativeBin.SINGBOX) }
+        var tpwsStrategy by remember { mutableStateOf(Settings.tpwsStrategy(ctx)) }
+        var sbDns by remember { mutableStateOf(Settings.sbDns(ctx)) }
+        var warpReady by remember { mutableStateOf(Settings.warpAccount(ctx) != null) }
+        var warpBusy by remember { mutableStateOf(false) }
+        var warpMsg by remember { mutableStateOf<String?>(null) }
         var busy by remember { mutableStateOf(false) }
         val logScroll = rememberScrollState()
         val clipboard = LocalClipboardManager.current
@@ -354,7 +367,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     // ---------- Стратегия ----------
-                    WtCard {
+                    if (engine == Settings.ENGINE_BYEDPI) WtCard {
                         Text("Стратегия обхода", color = WT.Text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                         val score = probe.scores[profile.id]?.let { " (проверка: $it)" } ?: ""
                         Text("Сейчас: " + strategyLabel(strategy) + score, color = WT.TextDim, fontSize = 13.sp)
@@ -427,6 +440,154 @@ class MainActivity : ComponentActivity() {
                     }
                     if (advancedOpen) {
                         WtCard {
+                            Text("Способ обхода", color = WT.Text, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                WtChip("ByeDPI (встроенный)", engine == Settings.ENGINE_BYEDPI, !running) {
+                                    Settings.setEngine(ctx, Settings.ENGINE_BYEDPI)
+                                    engine = Settings.ENGINE_BYEDPI
+                                }
+                                if (hasTpws) {
+                                    WtChip("zapret tpws", engine == Settings.ENGINE_TPWS, !running) {
+                                        Settings.setEngine(ctx, Settings.ENGINE_TPWS)
+                                        engine = Settings.ENGINE_TPWS
+                                    }
+                                }
+                                if (hasSingBox) {
+                                    WtChip("sing-box: TLS-фрагменты", engine == Settings.ENGINE_SB_FRAG, !running) {
+                                        Settings.setEngine(ctx, Settings.ENGINE_SB_FRAG)
+                                        engine = Settings.ENGINE_SB_FRAG
+                                    }
+                                    WtChip("sing-box: WARP (бесплатно)", engine == Settings.ENGINE_SB_WARP, !running) {
+                                        Settings.setEngine(ctx, Settings.ENGINE_SB_WARP)
+                                        engine = Settings.ENGINE_SB_WARP
+                                    }
+                                }
+                                WtChip("Свой SOCKS5-прокси", engine == Settings.ENGINE_SOCKS5, !running) {
+                                    Settings.setEngine(ctx, Settings.ENGINE_SOCKS5)
+                                    engine = Settings.ENGINE_SOCKS5
+                                }
+                            }
+                            if (!hasTpws && !hasSingBox) {
+                                Text(
+                                    "Движки zapret tpws и sing-box в эту сборку не вошли (шаги сборки в GitHub Actions необязательные).",
+                                    color = WT.TextDim,
+                                    fontSize = 12.sp,
+                                )
+                            }
+                            if (engine == Settings.ENGINE_TPWS) {
+                                Text(
+                                    "zapret tpws: локальный SOCKS5 с разбиением первого пакета, без root. Стратегия:",
+                                    color = WT.TextDim,
+                                    fontSize = 12.sp,
+                                )
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    TpwsArgs.names.forEach { n ->
+                                        WtChip(n, n == tpwsStrategy, !running) {
+                                            Settings.setTpwsStrategy(ctx, n)
+                                            tpwsStrategy = n
+                                        }
+                                    }
+                                }
+                            }
+                            if (engine == Settings.ENGINE_SB_FRAG || engine == Settings.ENGINE_SB_WARP) {
+                                Text(
+                                    if (engine == Settings.ENGINE_SB_WARP) {
+                                        "sing-box через бесплатный Cloudflare WARP (WireGuard): помогает, когда блокируются адреса Meta. " +
+                                            "Не работает, если оператор режет WireGuard."
+                                    } else {
+                                        "sing-box без сервера: имена сайтов через защищённый DNS, TLS-рукопожатие режется на фрагменты."
+                                    },
+                                    color = WT.TextDim,
+                                    fontSize = 12.sp,
+                                )
+                                Text("DNS:", color = WT.TextDim, fontSize = 12.sp)
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    listOf("cloudflare" to "Cloudflare DoH", "google" to "Google DoH", "system" to "Системный").forEach { (id, label) ->
+                                        WtChip(label, sbDns == id, !running) {
+                                            Settings.setSbDns(ctx, id)
+                                            sbDns = id
+                                        }
+                                    }
+                                }
+                            }
+                            if (engine == Settings.ENGINE_SB_WARP) {
+                                Text(
+                                    if (warpReady) "Аккаунт WARP создан" else "Аккаунт WARP не создан",
+                                    color = if (warpReady) WT.GreenGlow else WT.Amber,
+                                    fontSize = 13.sp,
+                                )
+                                warpMsg?.let { Text(it, color = WT.Amber, fontSize = 12.sp) }
+                                WtButton(
+                                    text = when {
+                                        warpBusy -> "Регистрация…"
+                                        warpReady -> "Создать заново"
+                                        else -> "Создать бесплатный аккаунт WARP"
+                                    },
+                                    primary = !warpReady,
+                                    enabled = !running && !warpBusy,
+                                    onClick = {
+                                        warpBusy = true
+                                        warpMsg = null
+                                        thread(isDaemon = true) {
+                                            val err = Warp.register(ctx)
+                                            runOnUiThread {
+                                                warpBusy = false
+                                                warpReady = Settings.warpAccount(ctx) != null
+                                                warpMsg = err ?: "Готово: аккаунт создан"
+                                            }
+                                        }
+                                    },
+                                )
+                            }
+                            if (engine == Settings.ENGINE_SOCKS5) {
+                                Text(
+                                    "Весь трафик WhatsApp пойдёт через указанный SOCKS5-прокси. Подойдёт Xray, sing-box, " +
+                                        "Hiddify или v2rayNG в режиме прокси (обычно 127.0.0.1, порт 10808 или 1080), " +
+                                        "Tor из Orbot (127.0.0.1:9050) или свой сервер. Имена сайтов передаются прокси, " +
+                                        "DNS оператора не используется. Работа встроенного ByeDPI при этом отключена.",
+                                    color = WT.TextDim,
+                                    fontSize = 12.sp,
+                                )
+                                WtTextField(value = proxyHost, onValueChange = { proxyHost = it.trim(); proxyMsg = null }, label = "Адрес (например 127.0.0.1)")
+                                WtTextField(
+                                    value = proxyPort,
+                                    onValueChange = { proxyPort = it.filter { c -> c.isDigit() }.take(5); proxyMsg = null },
+                                    label = "Порт",
+                                )
+                                WtTextField(value = proxyUser, onValueChange = { proxyUser = it; proxyMsg = null }, label = "Логин (если нужен)")
+                                WtTextField(
+                                    value = proxyPass,
+                                    onValueChange = { proxyPass = it; proxyMsg = null },
+                                    label = "Пароль (если нужен)",
+                                    password = true,
+                                )
+                                proxyMsg?.let { Text(it, color = WT.Amber, fontSize = 12.sp) }
+                                WtButton(
+                                    text = "Сохранить прокси",
+                                    primary = false,
+                                    enabled = !running,
+                                    onClick = {
+                                        val port = proxyPort.toIntOrNull() ?: 0
+                                        if (Settings.validProxy(proxyHost, port, proxyUser, proxyPass)) {
+                                            Settings.setProxy(ctx, proxyHost, port, proxyUser, proxyPass)
+                                            proxyMsg = "Сохранено"
+                                        } else {
+                                            proxyMsg = "Проверьте адрес и порт (адрес: буквы, цифры, точки)"
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                        if (engine == Settings.ENGINE_BYEDPI) WtCard {
                             Text("Выбрать стратегию вручную", color = WT.Text, fontWeight = FontWeight.Medium, fontSize = 15.sp)
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -474,7 +635,7 @@ class MainActivity : ComponentActivity() {
                                 },
                             )
                         }
-                        WtCard {
+                        if (engine == Settings.ENGINE_BYEDPI) WtCard {
                             WtSwitchRow(
                                 title = "Защищённый DNS (DoH)",
                                 subtitle = "Экспериментально. Помогает, если DNS оператора подменяет ответы, но отключает UDP: звонки WhatsApp работать не будут.",

@@ -6,6 +6,8 @@ let keyOpen = null; // null: решает состояние лицензии
 let justActivated = false;
 let logs = [];
 let rawTouched = false;
+let engineDraft = null; // выбранный, но ещё не сохранённый способ
+let proxyTouched = false;
 
 function plural(n, one, few, many) {
   const m100 = n % 100;
@@ -131,6 +133,20 @@ function render() {
   $('probeReport').textContent = S.probe.report || '';
   $('probeReport').hidden = !S.probe.report;
 
+  // ----- способ обхода
+  const engView = engineDraft || S.engine;
+  $('strategyCard').hidden = S.engine === 'socks5';
+  $('engByedpi').classList.toggle('on', engView === 'byedpi');
+  $('engSocks').classList.toggle('on', engView === 'socks5');
+  $('engByedpi').disabled = S.running;
+  $('engSocks').disabled = S.running;
+  $('proxyBox').hidden = engView !== 'socks5';
+  $('proxySave').disabled = S.running;
+  if (!proxyTouched) {
+    $('proxyHost').value = S.proxyHost || '';
+    $('proxyPort').value = S.proxyPort ? String(S.proxyPort) : '';
+  }
+
   // ----- дополнительно
   $('adv').hidden = !advOpen;
   $('advToggle').classList.toggle('open', advOpen);
@@ -148,6 +164,27 @@ function render() {
   renderLog();
 }
 
+$('engByedpi').addEventListener('click', async () => {
+  engineDraft = null;
+  const err = await window.wt.setEngine('byedpi');
+  $('proxyMsg').textContent = err || '';
+  render();
+});
+$('engSocks').addEventListener('click', () => {
+  engineDraft = 'socks5';
+  render();
+});
+$('proxyHost').addEventListener('input', () => { proxyTouched = true; $('proxyMsg').textContent = ''; });
+$('proxyPort').addEventListener('input', () => { proxyTouched = true; $('proxyMsg').textContent = ''; });
+$('proxySave').addEventListener('click', async () => {
+  const err = await window.wt.setEngine('socks5', $('proxyHost').value.trim(), $('proxyPort').value.trim());
+  $('proxyMsg').textContent = err || 'Сохранено';
+  if (!err) {
+    engineDraft = null;
+    proxyTouched = false;
+  }
+  render();
+});
 $('toggle').addEventListener('click', () => window.wt.toggleProtection());
 $('probeBtn').addEventListener('click', () => window.wt.startProbe());
 $('probeCancel').addEventListener('click', () => window.wt.cancelProbe());
